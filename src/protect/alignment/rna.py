@@ -87,10 +87,12 @@ def run_star(job, fastqs, univ_options, star_options):
             input_files[read_file + gz] = input_files[read_file] + gz
     # Untar the index
     input_files['star_index'] = untargz(input_files['star_index.tar.gz'], work_dir)
+
     # Check to see if user is using a STAR-Fusion index
     star_fusion_idx = os.path.join(input_files['star_index'], 'ref_genome.fa.star.idx')
     if os.path.exists(star_fusion_idx):
         input_files['star_index'] = star_fusion_idx
+
     input_files = {key: docker_path(path, work_dir=work_dir) for key, path in input_files.items()}
 
     # Using recommended STAR-Fusion parameters:

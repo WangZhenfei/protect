@@ -38,7 +38,7 @@ from protect.expression_profiling.rsem import wrap_rsem
 from protect.haplotyping.phlat import merge_phlat_calls, phlat_disk, run_phlat
 from protect.mutation_annotation.snpeff import run_snpeff, snpeff_disk
 from protect.mutation_calling.common import run_mutation_aggregator
-from protect.mutation_calling.fusion import run_fusion_caller
+from protect.mutation_calling.fusion import run_star_fusion, star_fusion_disk
 from protect.mutation_calling.indel import run_indel_caller
 from protect.mutation_calling.muse import run_muse
 from protect.mutation_calling.mutect import run_mutect
@@ -426,6 +426,7 @@ def launch_protect(job, patient_data, univ_options, tool_options):
     # Ascertin number of cpus to use per job
     tool_options['star']['n'] = tool_options['bwa']['n'] = tool_options['phlat']['n'] = \
         tool_options['rsem']['n'] = ascertain_cpu_share(univ_options['max_cores'])
+
     # Define the various nodes in the DAG
     # Need a logfile and a way to send it around
     sample_prep = job.wrapJobFn(prepare_samples, patient_data, univ_options, disk='40G')
@@ -630,7 +631,7 @@ def get_all_tool_inputs(job, tools):
                 # If a file is of the type file, vcf, tar or fasta, it needs to be downloaded from
                 # S3 if reqd, then written to job store.
                 if option.split('_')[-1] in ['file', 'vcf', 'index', 'fasta', 'fai', 'idx', 'dict',
-                                             'tbi', 'beds']:
+                                             'tbi', 'beds', 'gtf', 'config']:
                     tools[tool][option] = job.addChildJobFn(get_pipeline_inputs, option,
                                                             tools[tool][option]).rv()
                 elif option == 'version':

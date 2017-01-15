@@ -28,6 +28,7 @@ from urlparse import urlparse
 import errno
 import gzip
 import os
+import re
 import subprocess
 import sys
 import tarfile
@@ -62,14 +63,15 @@ def docker_path(filepath, work_dir=None):
     Given a path, return that files path inside the docker mount directory (/data).
 
     :param str filepath: The path to a file
+    :param str work_dir: The part of the path to replace with /data
     :return: The docker-friendly path for `filepath`
     :rtype: str
     """
-    if work_dir is None:
-        return os.path.join('/data', os.path.basename(filepath))
-    else:
-        work_dir = os.path.abspath(work_dir)
+    if work_dir:
         return re.sub(work_dir, '/data', filepath)
+
+    else:
+        return os.path.join('/data', os.path.basename(filepath))
 
 
 def docker_call(tool, tool_parameters, work_dir, java_xmx=None, outfile=None,
@@ -105,6 +107,7 @@ def docker_call(tool, tool_parameters, work_dir, java_xmx=None, outfile=None,
     dimg_rv = subprocess.check_output(call)
     existing_images = [':'.join(x.split()[0:2]) for x in dimg_rv.splitlines()
                        if x.startswith(dockerhub)]
+
     if docker_tool not in existing_images:
         try:
             call = ' '.join(['docker', 'pull', docker_tool]).split()
