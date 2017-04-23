@@ -13,34 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from __future__ import print_function
+from math import ceil
+
+from bd2k.util.expando import Expando
+
 import collections
 import csv
 import logging
-from math import ceil
 import os
 import re
 import string
 
-from bd2k.util.expando import Expando
-
-from protect.common import get_files_from_filestore, docker_call, export_results, untargz
-
-
-def run_fusion_caller(job, star_bam, univ_options, fusion_options):
-    """
-    Run a fusion caller on DNA bams.  This module will be implemented in the future.
-
-    :param toil.fileStore.FileID star_bam: The input RNA-Seq bam
-    :param dict univ_options: Dict of universal options used by almost all tools
-    :param dict fusion_options: Options specific to fusion calling
-    :return: fsID to the merged fusion calls
-    :rtype: toil.fileStore.FileID
-    """
-    job.fileStore.logToMaster('Running FUSION on %s' % univ_options['patient'])
-    job.fileStore.logToMaster('Fusions are currently unsupported.... Skipping.')
-    fusion_file = job.fileStore.getLocalTempFile()
-    output_file = job.fileStore.writeGlobalFile(fusion_file)
-    return output_file
+from protect.common import docker_call, docker_path, export_results, get_files_from_filestore, untargz
 
 
 def star_fusion_disk(rna_fastqs, star_tar):
@@ -48,20 +32,22 @@ def star_fusion_disk(rna_fastqs, star_tar):
                2 * ceil(star_tar.size + 524288) +
                5242880)
 
+
 def run_star_fusion(job, fastqs, junction_file, univ_options, star_fusion_options):
     """
     Runs STAR-Fusion and filters fusion calls using FusionInspector
 
-    :param job job: job
     :param tuple fastqs: RNA-Seq FASTQ Filestore IDs
-    :param FsID junction_file: Chimeric junction file
+    :param toil.fileStore.FileID: Chimeric junction file
     :param dict univ_options: universal arguments used by almost all tools
     :param dict star_fusion_options: STAR-Fusion specific parameters
     :return: Transgene BEDPE file
-    :rtype: Filestore ID
+    :rtype: toil.fileStore.FileID
     """
     job.fileStore.logToMaster('Running STAR-Fusion on %s' % univ_options['patient'])
+
     work_dir = job.fileStore.getLocalTempDir()
+
     input_files = {'rna_1.fq.gz': fastqs[0],
                    'rna_2.fq.gz': fastqs[1],
                    'tool_index.tar.gz': star_fusion_options['index']}
@@ -71,15 +57,16 @@ def run_star_fusion(job, fastqs, junction_file, univ_options, star_fusion_option
     # If there isn't a junction file, then we can run STAR-Fusion from the fastq files
     if junction_file is not None:
         input_files['STAR.junction'] = junction_file
-        parameters.extend(['--chimeric_junction', 'STAR.junction'])
+        parameters.extend(['--chimeric_junction', '/data/STAR.junction'])
+
     else:
-        parameters.extend(['--left_fq', 'rna_1.fq.gz', '--right_fq', 'rna_2.fq.gz'])
+        parameters.extend(['--left_fq', '/data/rna_1.fq.gz', '--right_fq', '/data/rna_2.fq.gz'])
 
     input_files = get_files_from_filestore(job, input_files, work_dir, docker=False)
     input_files['tool_index'] = os.path.basename(untargz(input_files['tool_index.tar.gz'], work_dir))
 
     cores = star_fusion_options['n']
-    parameters.extend(['--output_dir', '/data/fusion-output',    # Docker container mounts work_dir at /data
+    parameters.extend(['--output_dir', '/data/fusion-output',
                        '--genome_lib_dir', input_files['tool_index'],
                        '--CPU', str(cores)])
 
@@ -103,8 +90,8 @@ def run_star_fusion(job, fastqs, junction_file, univ_options, star_fusion_option
 
     parameters = ['--fusions', '/data/fusion-output/star-fusion.fusion_candidates.final.abridged',
                   '--genome_lib', input_files['tool_index'],
-                  '--left_fq', 'rna_1.fq.gz',
-                  '--right_fq', 'rna_2.fq.gz',
+                  '--left_fq', '/data/rna_1.fq.gz',
+                  '--right_fq', '/data/rna_2.fq.gz',
                   '--out_dir', '/data/FusionInspector',
                   '--out_prefix', 'FusionInspector',
                   '--include_Trinity',
@@ -125,9 +112,9 @@ def run_star_fusion(job, fastqs, junction_file, univ_options, star_fusion_option
         with open(fusion_path, 'r') as f, open(output_path, 'w') as g:
             g.write(f.next())
             for line in f:
-                line = line.strip().split()
-                ldas = line[8]
-                j_ffpm, s_ffpm = line[-2:]
+                fields = line.strip().split()
+                ldas = fields[8]
+                j_ffpm, s_ffpm = fields[-2:]
                 if ldas == 'YES_LDAS' and sum([float(j_ffpm), float(s_ffpm)]) > 0.1:
                     found_fusion = True
                     g.write(line)
@@ -159,7 +146,7 @@ def parse_star_fusion(infile):
 
     :param str infile: path to STAR-Fusion prediction file
     :return: Fusion prediction attributes
-    :rtype: Expando
+    :rtype: bd2k.util.expando.Expando
     """
     reader = csv.reader(infile, delimiter='\t')
     header = reader.next()
@@ -271,7 +258,7 @@ def get_gene_ids(fusion_bed):
     Parses FusionInspector bed file to ascertain the ENSEMBL gene ids
 
     :param str fusion_bed: path to fusion annotation
-    :return:
+    :return: dict
     """
     with open(fusion_bed, 'r') as f:
         gene_to_id = {}
@@ -289,13 +276,12 @@ def reformat_star_fusion_output(job, fusion_annot, fusion_file, transcript_file,
     """
     Writes STAR-Fusion results in Transgene BEDPE format
 
-    :param job job: job
-    :param FsID fusion_file: STAR-fusion prediction file
-    :param FsID transcript_file: Fusion transcript FASTA file
-    :param FsID transcript_gff_file: Fusion transcript GFF file
-    :param univ_options: universal arguments used by almost all tools
+    :param toil.fileStore.FileID fusion_file: STAR-fusion prediction file
+    :param toil.fileStore.FileID transcript_file: Fusion transcript FASTA file
+    :param toil.fileStore.FileID transcript_gff_file: Fusion transcript GFF file
+    :param dict univ_options: universal arguments used by almost all tools
     :return: Transgene BEDPE file
-    :rtype: FsID
+    :rtype: toil.fileStore.FileID
     """
     job.fileStore.logToMaster('Reformatting STAR-Fusion output for %s' % univ_options['patient'])
 
@@ -360,4 +346,7 @@ def reformat_star_fusion_output(job, fusion_annot, fusion_file, transcript_file,
                                  three_prime_seq,
                                  record.LeftGene,
                                  record.RightGene])
-    return job.fileStore.writeGlobalFile(output_path)
+
+    bedpe_id = job.fileStore.writeGlobalFile(output_path)
+    export_results(job, bedpe_id, 'fusion.bedpe', univ_options, subfolder='mutations/fusions')
+    return bedpe_id

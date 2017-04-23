@@ -131,6 +131,8 @@ def run_star(job, fastqs, univ_options, star_options):
         output_files[bam_file] = job.fileStore.writeGlobalFile('/'.join([work_dir, bam_file]))
     export_results(job, output_files['rnaAligned.toTranscriptome.out.bam'], 'rna_transcriptome.bam',
                    univ_options, subfolder='alignments')
+    export_results(job, output_files['rnaChimeric.out.junction'], 'rna_chimeric.junction',
+                   univ_options, subfolder='mutations/fusions')
     return output_files
 
 
