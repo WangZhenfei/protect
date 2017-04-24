@@ -162,4 +162,5 @@ def sort_and_index_star(job, star_bams, univ_options, star_options):
     job.addChild(sort)
     sort.addChild(index)
     return {'rna_genome': index.rv(),
-            'rna_transcriptome.bam': star_bams['rnaAligned.toTranscriptome.out.bam']}
+            'rna_transcriptome.bam': star_bams['rnaAligned.toTranscriptome.out.bam'],
+            'rnaChimeric.out.junction': star_bams['rnaChimeric.out.junction']}
