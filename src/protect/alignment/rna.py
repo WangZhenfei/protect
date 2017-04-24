@@ -126,7 +126,7 @@ def run_star(job, fastqs, univ_options, star_options):
                     dockerhub=univ_options['dockerhub'], tool_version=star_options['version'])
     output_files = defaultdict()
     for bam_file in ['rnaAligned.toTranscriptome.out.bam',
-                     'rnaAligned.sortedByCoord.out.bam',
+                     'rnaAligned.out.bam',
                      'rnaChimeric.out.junction']:
         output_files[bam_file] = job.fileStore.writeGlobalFile('/'.join([work_dir, bam_file]))
     export_results(job, output_files['rnaAligned.toTranscriptome.out.bam'], 'rna_transcriptome.bam',
