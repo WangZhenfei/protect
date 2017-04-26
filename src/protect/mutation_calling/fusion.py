@@ -24,7 +24,7 @@ import os
 import re
 import string
 
-from protect.common import docker_call, docker_path, export_results, get_files_from_filestore, untargz
+from protect.common import docker_call, export_results, get_files_from_filestore, untargz
 
 
 def star_fusion_disk(rna_fastqs, star_tar):
@@ -74,7 +74,7 @@ def run_star_fusion(job, fastqs, junction_file, univ_options, star_fusion_option
                 tool_parameters=parameters,
                 work_dir=work_dir,
                 dockerhub='jpfeil',
-                tool_version='protect')
+                tool_version='1.0.0')
 
     fusion_path = os.path.join(work_dir, 'fusion-output/star-fusion.fusion_candidates.final.abridged')
 
@@ -101,7 +101,7 @@ def run_star_fusion(job, fastqs, junction_file, univ_options, star_fusion_option
                 tool_parameters=parameters,
                 work_dir=work_dir,
                 dockerhub='jpfeil',
-                tool_version='protect')
+                tool_version='1.0.1')
 
     found_fusion = False
     fusion_path = os.path.join(work_dir, 'FusionInspector/FusionInspector.fusion_predictions.final.abridged.FFPM')
@@ -138,7 +138,8 @@ def run_star_fusion(job, fastqs, junction_file, univ_options, star_fusion_option
                                  transcripts,
                                  transcript_annotation,
                                  univ_options).rv()
-
+    else:
+        job.fileStore.logToMaster('No fusions detected for %s' % univ_options['patient'])
 
 def parse_star_fusion(infile):
     """
