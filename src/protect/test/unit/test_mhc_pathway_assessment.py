@@ -19,12 +19,14 @@ Affiliation : UCSC BME, UCSC Genomics Institute
 File : protect/test/test_mhc_pathway_assessment.py
 """
 from __future__ import print_function
-from protect.test import ProtectTest
-from protect.common import get_file_from_s3, untargz
-from protect.addons import assess_mhc_genes
-from toil.job import Job
 
 import os
+
+from toil.job import Job
+
+from protect.addons.assess_mhc_pathway import assess_mhc_genes
+from protect.common import get_file_from_s3, untargz
+from protect.test import ProtectTest
 
 
 class TestMHCPathwayAssessment(ProtectTest):

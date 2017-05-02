@@ -24,7 +24,7 @@ from __future__ import print_function
 from collections import defaultdict
 from multiprocessing import cpu_count
 
-from protect.addons import run_mhc_gene_assessment
+from protect.addons.assess_mhc_pathway import run_mhc_gene_assessment
 from protect.alignment.dna import align_dna
 from protect.alignment.rna import align_rna
 from protect.binding_prediction.common import merge_mhc_peptide_calls, spawn_antigen_predictors
@@ -90,9 +90,17 @@ def _ensure_patient_group_is_ok(patient_object, patient_name=None):
     :param str patient_name: Optional name for the set
     :raises ParameterError: If required entry doesnt exist
     """
+    from protect.addons.assess_mhc_pathway import TCGAToGTEx
     assert isinstance(patient_object, (set, dict)), '%s,%s' % (patient_object, patient_name)
     # set(dict) = set of keys of the dict
     test_set = set(patient_object)
+    if 'tumor_type' not in patient_object:
+        raise ParameterError(('The patient entry for sample %s ' % patient_name) +
+                             'does not contain a Tumor type.')
+    elif patient_object['tumor_type'] not in TCGAToGTEx:
+        raise ParameterError(('The patient entry for sample %s ' % patient_name) +
+                             'does contains an invalid Tumor type. Please use one of the '
+                             'vslid TCGA tumor types.')
     if {'tumor_dna_fastq_1', 'normal_dna_fastq_1', 'tumor_rna_fastq_1'}.issubset(test_set):
         # Best case scenario, we get all fastqs
         pass
@@ -226,7 +234,8 @@ def parse_patients(job, patient_dict):
     :rtype: dict
     """
     output_dict = {'ssec_encrypted': patient_dict.get('ssec_encrypted') in ('True', 'true'),
-                   'patient_id': patient_dict['patient_id']}
+                   'patient_id': patient_dict['patient_id'],
+                   'tumor_type': patient_dict['tumor_type']}
     patient_keys = set(patient_dict)
     out_keys = []
     if {'mutation_vcf', 'hla_haplotype_files'}.issubset(patient_dict):
@@ -418,11 +427,12 @@ def launch_protect(job, patient_data, univ_options, tool_options):
 
     :param dict patient_data: Dict of information regarding the input sequences for the patient
     :param dict univ_options: Dict of universal options used by almost all tools
-    :param dict tool_options: Options for the various tools
+    :param dict tool_options: Options for the various tools?
     """
     # Add Patient id to univ_options as is is passed to every major node in the DAG and can be used
     # as a prefix for the logfile.
     univ_options['patient'] = patient_data['patient_id']
+    univ_options['tumor_type'] = patient_data['tumor_type']
     # Ascertin number of cpus to use per job
     tool_options['star']['n'] = tool_options['bwa']['n'] = tool_options['phlat']['n'] = \
         tool_options['rsem']['n'] = ascertain_cpu_share(univ_options['max_cores'])

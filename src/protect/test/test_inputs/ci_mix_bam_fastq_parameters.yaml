@@ -36,6 +36,7 @@ patients:
         tumor_rna_bam : s3://cgl-pipeline-inputs/protect/unit_results/alignments/rna_genome_sorted.bam
         tumor_rna_transcriptome_bam : s3://cgl-pipeline-inputs/protect/unit_results/alignments/rna_transcriptome.bam
         hla_haplotype_files: s3://cgl-pipeline-inputs/protect/unit_results/haplotyping/mhc_haplotypes.tar.gz
+        tumor_type: 'SKCM'
 
 
 # These are options Which are used by most tools
@@ -121,4 +122,4 @@ prediction_ranking:
             tndelta: 0.2
 
 mhc_pathway_assessment:
-    genes_file : S3://cgl-pipeline-inputs/protect/ci_references/mhc_pathway_genes.json.tar.gz
+    background_file : S3://cgl-pipeline-inputs/protect/ci_references/background_file.tsv.tar.gz
