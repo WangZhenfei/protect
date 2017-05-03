@@ -498,8 +498,14 @@ def launch_protect(job, patient_data, univ_options, tool_options):
                          cores=1, disk='100M').encapsulate()
     bam_files['tumor_rna'].addChild(rsem)
     # Define the fusion calling node
-    fusions = job.wrapJobFn(run_fusion_caller, bam_files['tumor_rna'].rv(), univ_options,
-                            'fusion_options', disk='100M', memory='100M', cores=1)
+    fusions = job.wrapJobFn(run_star_fusion,
+                            cutadapt.rv(),
+                            bam_files['tumor_rna'].rv('rnaChimeric.out.junction'),
+                            univ_options,
+                            tool_options['star'],
+                            disk='100M', memory='100M', cores=1)
+    fusions.addChild(fastq_deletion_1)
+    fusions.addChild(fastq_deletion_2)
     bam_files['tumor_rna'].addChild(fusions)
     # Define the bam deletion node
     delete_bam_files['tumor_rna'] = job.wrapJobFn(delete_bams, bam_files['tumor_rna'].rv(),
@@ -589,7 +595,7 @@ def launch_protect(job, patient_data, univ_options, tool_options):
     transgene = job.wrapJobFn(run_transgene, snpeff.rv(), bam_files['tumor_rna'].rv(), univ_options,
                               tool_options['transgene'],
                               disk=PromisedRequirement(transgene_disk, bam_files['tumor_rna'].rv()),
-                              memory='100M', cores=1)
+                              memory='100M', cores=1, fusions=fusions.rv())
     snpeff.addChild(transgene)
     bam_files['tumor_rna'].addChild(transgene)
     transgene.addChild(delete_bam_files['tumor_rna'])
