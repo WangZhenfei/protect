@@ -125,9 +125,17 @@ def run_star_fusion(job, fastqs, junction_file, univ_options, star_fusion_option
             g.write(f.next())
             for line in f:
                 fields = line.strip().split()
-                ldas = fields[8]
+
+                # Check for a large anchor support
+                ldas = fields[10]
+
+                assert ldas in {'YES', 'NO'}, 'FusionInpsector file is malformed!'
+
                 j_ffpm, s_ffpm = fields[-2:]
-                if ldas == 'YES_LDAS' and sum([float(j_ffpm), float(s_ffpm)]) > 0.1:
+
+                # Fusions without a larger anchor support or low read support
+                # are suspicious and should not be consider for further analysis
+                if ldas == 'YES' and sum([float(j_ffpm), float(s_ffpm)]) > 0.1:
                     found_fusion = True
                     g.write(line)
 
