@@ -73,10 +73,16 @@ def run_star_fusion(job, fastqs, junction_file, univ_options, star_fusion_option
     docker_call(tool='star-fusion',
                 tool_parameters=parameters,
                 work_dir=work_dir,
-                dockerhub='jpfeil',
+                dockerhub='aarjunrao',
                 tool_version='1.0.0')
 
     fusion_path = os.path.join(work_dir, 'fusion-output/star-fusion.fusion_candidates.final.abridged')
+
+    # Export the STAR-Fusion predictions
+    export_results(job,
+                   job.fileStore.writeGlobalFile(fusion_path),
+                   'star-fusion-predictions.tsv',
+                   univ_options, subfolder='mutations/fusions')
 
     # Check for fusion prediction
     with open(fusion_path, 'r') as f:
@@ -100,12 +106,18 @@ def run_star_fusion(job, fastqs, junction_file, univ_options, star_fusion_option
     docker_call(tool='fusion-inspector',
                 tool_parameters=parameters,
                 work_dir=work_dir,
-                dockerhub='jpfeil',
+                dockerhub='aarjunrao',
                 tool_version='1.0.1')
 
     found_fusion = False
     fusion_path = os.path.join(work_dir, 'FusionInspector/FusionInspector.fusion_predictions.final.abridged.FFPM')
     output_path = os.path.join(work_dir, 'fusion.final')
+
+    # Export the FusionInpsector predictions
+    export_results(job,
+                   job.fileStore.writeGlobalFile(fusion_path),
+                   'fusion-inspector-predictions.tsv',
+                   univ_options, subfolder='mutations/fusions')
 
     # Remove fusions without a large anchor sequence and at least 0.1 fusion fragments per million reads
     if os.path.exists(fusion_path):

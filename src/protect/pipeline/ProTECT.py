@@ -594,7 +594,7 @@ def launch_protect(job, patient_data, univ_options, tool_options):
     transgene = job.wrapJobFn(run_transgene, snpeff.rv(), bam_files['tumor_rna'].rv(), univ_options,
                               tool_options['transgene'],
                               disk=PromisedRequirement(transgene_disk, bam_files['tumor_rna'].rv()),
-                              memory='100M', cores=1, fusions=fusions.rv())
+                              memory='100M', cores=1, fusion_calls=fusions.rv())
     snpeff.addChild(transgene)
     bam_files['tumor_rna'].addChild(transgene)
     transgene.addChild(delete_bam_files['tumor_rna'])
