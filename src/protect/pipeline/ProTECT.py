@@ -576,7 +576,6 @@ def launch_protect(job, patient_data, univ_options, tool_options):
             for caller in mutations:
                 bam_files[sample_type].addChild(mutations[caller])
         bam_files['tumor_rna'].addChild(mutations['radia'])
-        mutations['fusions'] = fusions
         get_mutations = job.wrapJobFn(run_mutation_aggregator,
                                       {caller: cjob.rv() for caller, cjob in mutations.items()},
                                       univ_options, disk='100M', memory='100M',

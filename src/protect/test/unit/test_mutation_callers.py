@@ -94,7 +94,7 @@ class TestMutationCallers(ProtectTest):
         star_fusion_options = {}
         call = 's3am download S3://pimmuno-test-data/CI_test_input/GRCh37_chr17_chr20_v19_CTAT_lib_ready.tar.gz ./index.tar.gz'
         subprocess.check_call(call.split(' '))
-        star_fusion_options['tool_index'] = job.fileStore.writeGlobalFile('index.tar.gz')
+        star_fusion_options['index'] = job.fileStore.writeGlobalFile('index.tar.gz')
         star_fusion_options['n'] = 2
         return star_fusion_options
 
