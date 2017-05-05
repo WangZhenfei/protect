@@ -90,7 +90,7 @@ def _ensure_patient_group_is_ok(patient_object, patient_name=None):
     :param str patient_name: Optional name for the set
     :raises ParameterError: If required entry doesnt exist
     """
-    from protect.addons.assess_mhc_pathway import TCGAToGTEx
+    from protect.addons.common import TCGAToGTEx
     assert isinstance(patient_object, (set, dict)), '%s,%s' % (patient_object, patient_name)
     # set(dict) = set of keys of the dict
     test_set = set(patient_object)
@@ -705,7 +705,7 @@ def prepare_samples(job, patient_dict, univ_options):
     if patient_dict['ssec_encrypted']:
         assert univ_options['sse_key'] is not None, 'Cannot read ssec encrypted data without a key.'
     for input_file in patient_dict:
-        if input_file in ('ssec_encrypted', 'patient_id'):
+        if input_file in ('ssec_encrypted', 'patient_id', 'tumor_type'):
             output_dict[input_file] = patient_dict[input_file]
             continue
         output_dict[input_file] = get_pipeline_inputs(

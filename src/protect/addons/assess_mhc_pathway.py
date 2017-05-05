@@ -13,21 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from __future__ import print_function
-
-from collections import Counter
-
+from protect.addons.common import TCGAToGTEx
 from protect.common import export_results, get_files_from_filestore, untargz
 from protect.haplotyping.phlat import parse_phlat_file
 
 import json
 import os
 import pandas as pd
-
-TCGAToGTEx = {'STAD': 'Stomach', 'KIRP': 'Kidney', 'THCA': 'Thyroid', 'PAAD': 'Pancreas', 'KICH': 'Kidney',
-              'ESCA': 'Esophagus', 'CESC': 'Cervix Uteri', 'OV': 'Ovary', 'PCPG': 'Adrenal Gland',
-              'BRCA': 'Breast', 'KIRC': 'Kidney', 'LUAD': 'Lung', 'LGG': 'Brain', 'BLCA': 'Bladder',
-              'GBM': 'Brain', 'SKCM': 'Skin', 'ACC': 'Adrenal Gland', 'LIHC': 'Liver', 'TGCT': 'Testis',
-              'COAD': 'Colon', 'LUSC': 'Lung', 'UCEC': 'Uterus', 'PRAD': 'Prostate', 'UCS': 'Uterus'}
 
 
 def run_mhc_gene_assessment(job, rsem_files, rna_haplotype, univ_options, mhc_genes_options):
